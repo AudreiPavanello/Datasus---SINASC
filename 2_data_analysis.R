@@ -54,16 +54,6 @@ df1 <- df1 %>%
 
 summary(df1)
 
-
-tabyl(df2) %>% 
-  flextable::flextable() %>% 
-  flextable::autofit()
-
-df3 %>%
-  flextable::flextable() %>%   
-  flextable::autofit()          
-
-
 df1 %>% 
   get_summary_stats(type = "common",)  %>% 
   flextable::flextable() %>%    
@@ -186,6 +176,10 @@ ggplot(data = df2, aes(x = factor(ESTCIVMAE))) +
 # Data Wrangling ----------------------------------------------------------
 glimpse(df1)
 
+df1 <- df1 %>%
+  mutate_if(is.numeric, as.double) %>%
+  mutate_if(negate(is.numeric), as.factor)
+
 df1$PESO <- as.numeric(df1$PESO)
 df1$QTDFILVIVO <- as.numeric(df1$QTDFILVIVO)
 df1$QTDFILMORT <- as.numeric(df1$QTDFILMORT)
@@ -224,7 +218,7 @@ ValidSet <- df2[-train,]
 
 
 
-# Modelo Árvore de classificação simples --> 0.7 usado de split-----------------
+# Modelo Árvore de classificação simples --> -----------------------------------
 
 
 arvore <- rpart(Cat_PESO ~. ,
@@ -238,10 +232,12 @@ arvore <- rpart(Cat_PESO ~. ,
 
 
 rpart.plot::rpart.plot(arvore, type = 2, extra = 106,
-                       box.palette = "RdYlGn", digits = 2) # Paleta de cores
+                       box.palette = "RdYlGn", digits = 2) 
 
 arvore$variable.importance
+
 prp(arvore)
+
 ## gráfico para plotar importância das variáveis
 
 barplot(arvore$variable.importance, 
@@ -283,7 +279,7 @@ summary(logistic_model)
 
 modelo_logistic$AIC
 
-## Matrix de confusão Modelo Logístico Multinomial 0.8 split
+## Matrix de confusão Modelo Logístico Multinomial
 
 ValidSet$Cat_PESO <- as.factor(ValidSet$Cat_PESO)
 
@@ -303,16 +299,6 @@ arvore_roc <- predict(modelo_logistic, newdata = ValidSet, type = "prob")
 tree.roc <- multiclass.roc(ValidSet$Cat_PESO, arvore_roc)
 
 auc(tree.roc)
-
-ggplot(data = modelo_logistic, aes(x = x, y = y, color = Cat_PESO)) +
-  geom_point() +
-  labs(title = "Modelo Logístico Multinomial",
-       x = "Variável X",
-       y = "Variável Y",
-       color = "Classe")
-
-
-class(modelo_logistic)
 
 # Random Forest -----------------------------------------------------------
 ## Random Forest --> 0.5 usado de split --> Váriavel Target precisa ser Factor
@@ -334,6 +320,7 @@ cm_rf <- confusionMatrix(rf_train, reference = ValidSet$Cat_PESO)
 
 cm_rf
 rf$importance
+
 varImpPlot(rf)
 
 
@@ -344,109 +331,3 @@ arvore_roc <- predict(modelo_random_forest, newdata = ValidSet, type = "prob")
 tree.roc <- multiclass.roc(ValidSet$Cat_PESO, arvore_roc)
 
 auc(tree.roc)
-
-
-
-# Xgboost -----------------------------------------------------------------
-##Xgboost via caret --> 0.7 split
-
-## Controle
-controle_xgboost <- trainControl(method = "cv", 
-                                 number = 5,
-                                 allowParallel = TRUE,
-                                )
-
-modelo_xgb <- caret::train(
-  Cat_PESO ~., 
-  data = TrainSet, 
-  method = "xgbTree",
-  na.action = na.exclude) ## Forma de dropar os NAs, outras formas incluem
-##  na.action = na.roughfix)
-
-modelo$bestTune
-
-plot(modelo)
-
-
-plot(varImp(modelo))
-
-saveRDS(modelo, "modelo_xg_boost_tree.rds")
-
-
-# Treinamento variáveis baixo e alto peso ---------------------------------
-
-df3 <- filter(df2, Cat_PESO != "Peso Normal")
-
-
-train <- sample(nrow(df3), 0.8*nrow(df3), replace = FALSE)
-TrainSet <- df3[train,]
-ValidSet <- df3[-train,]
-
-arvore2 <- rpart(Cat_PESO ~. ,
-                 data = TrainSet,  
-                 method = 'class',    
-                 control = rpart.control(cp = 0,00001,
-                                         maxdepth = 8, minsplit = 1000, 
-                                         minbucket = 1000)
-)
-
-rpart.plot::rpart.plot(arvore, type = 2, extra = 0,
-                       box.palette = "RdYlGn", digits = 1,
-                       tweak = 1.3) # Paleta de cores
-prp(arvore)
-
-## Matrix de confusão Rpart
-
-ValidSet$Cat_PESO <- as.factor(ValidSet$Cat_PESO)
-
-arvore_train2 <- predict(arvore2, newdata = ValidSet, type = "class")
-
-cm_arvore2 <- confusionMatrix(arvore_train2, reference = ValidSet$Cat_PESO)
-
-cm_arvore2
-
-arvore2$variable.importance
-
-barplot(rf$importance, 
-        main = "Variable Importance",
-        xlab = "Value", ylab = "",
-        horiz = TRUE, las = 1, cex.names = 0.5)
-varImpPlot(rf)
-
-
-# Rede Neural Artificial --------------------------------------------------
-m <- model.matrix(
-  ~ ESCMAE + RACACOR + GRAVIDEZ + IDANOMAL +
-    RACACORMAE + IDADEMAE + QTDFILVIVO + QTDFILMORT + SEMAGESTAC +
-    PARTO + SEXO + QTDPARTCES + QTDGESTANT + QTDPARTNOR + ESTCIVMAE, 
-  data = TrainSet )
-
-
-
-nn <- neuralnet( Cat_PESO ~ ESCMAE + RACACOR + GRAVIDEZ + IDANOMAL +
-                  RACACORMAE + IDADEMAE + QTDFILVIVO + QTDFILMORT + SEMAGESTAC +
-                  PARTO + SEXO + QTDPARTCES + QTDGESTANT + QTDPARTNOR + ESTCIVMAE,
-                 data = m, hidden = 2)
-
-
-
-
-# Criar o controle para a modelagem
-controle <- trainControl(method = "cv", number = 5)
-
-# Criar o modelo de rede neural
-modelo <- train(Cat_PESO ~ ESCMAE + RACACOR + GRAVIDEZ + IDANOMAL +
-                  RACACORMAE + IDADEMAE + QTDFILVIVO + QTDFILMORT + SEMAGESTAC +
-                  PARTO + SEXO + QTDPARTCES + QTDGESTANT + QTDPARTNOR + ESTCIVMAE,
-                data = TrainSet, method = "nnet", trControl = controle, tuneLength = 5, trace = FALSE)
-
-# Plotar a rede neural
-plot(modelo$finalModel)
-
-
-
-
-
-
-
-
