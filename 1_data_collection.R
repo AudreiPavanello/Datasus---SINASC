@@ -1,68 +1,41 @@
-# Carregando bibliotecas necessárias--------------------------------------------
+# Loading Packages--------------------------------------------------------------
 
-pacman::p_load("microdatasus", # Carregar dados datasus
-               "tidyverse",    # manipulação de dados
-               "openxlsx",     # exportar dados excel
-               'readxl',       # carregar dados excel
-               'tidytext',     # processamento linguagem natural
-               'rio',          # importar/exportar dados
-               'janitor',      # limpeza de nomes
-               'gtsummary',    # estatísticas descritivas
-               'here',         # sincronizar working directory 
-               'rstatix',      # estatísticas descritivas
-               'CI')           # Cálculo do intervalo de confiança
+# The pacman package allows the loading and install of many libraries. 
 
-## Carregando os dados do DATASUS-----------------------------------------------
-## Dados do Sistema Nacional de Nascidos Vivos
+pacman::p_load("microdatasus", # Package to load the SUS data
+               "tidyverse",    # Data manipulation
+               'tidytext',     # Natural language processing
+               'rio',          # Import/export of data
+               'janitor',      # Data cleaning
+               'gtsummary',    # Descriptive statistics
+               'here',         # Working directory sincronization
+               'rstatix',      # Descriptive statistics
+               'CI')           # Confidence interval 
 
-dadospr <- fetch_datasus(year_start = 2013, 
+## Loading the data of DATASUS -------------------------------------------------
+## Unified Health System Data from Brasil
+## SINASC System - Information System on Live Births
+
+datapr <- fetch_datasus(year_start = 2013, 
                          year_end = 2020,
                          uf = 'PR', 
                          information_system = 'SINASC')
 
-dadossp <- fetch_datasus(year_start = 2013, 
-                       year_end = 2020,
-                       uf = 'SP', 
-                       information_system = 'SINASC')
-
-dadosba <- fetch_datasus(year_start = 2013, 
-                       year_end = 2020,
-                       uf = 'BA', 
-                       information_system = 'SINASC')
-
-dadosmt <- fetch_datasus(year_start = 2013, 
-                         year_end = 2020,
-                         uf = 'MT', 
-                         information_system = 'SINASC')
+## Data processing -------------------------------------------------------------
+datapr <- process_sinasc(datapr)
 
 
-dadospa <- fetch_datasus(year_start = 2013, 
-                         year_end = 2020,
-                         uf = 'PA', 
-                         information_system = 'SINASC')
-
-## Processando os dados --> Essa função processa e corrige formatos dos dados---
-dadospr <- process_sinasc(dadospr)
-dadosba <- process_sinasc(dadosba)
-dadospa <- process_sinasc(dadospa)
-dadossp <- process_sinasc(dadossp)
-dadosmt <- process_sinasc(dadosmt)
-
-export(dados, "dados_sinasc_2013_2021_pr_full.xlsx")
-
-# Selecionado váriaveis de interesse --------------------------------------
-dados2 <- select(dadospr, IDADEMAE, ESCMAE, QTDFILVIVO, QTDFILMORT,
+# Selecting Variable of interest------------------------------------------------
+data2 <- select(dadospr, IDADEMAE, ESCMAE, QTDFILVIVO, QTDFILMORT,
                  SEXO, RACACOR, GRAVIDEZ, PARTO, PESO, IDANOMAL,
                  GESTACAO, RACACORMAE, SEMAGESTAC, ESTCIVMAE, 
                  QTDPARTCES, QTDGESTANT, QTDPARTNOR
-                 )
+)
 
 
-# Retirando NAs -----------------------------------------------------------
-dados2 <- drop_na(dados2)
+# Withdrawing NAs --------------------------------------------------------------
+data2 <- drop_na(dados2)
 
-# Criando planilha excel para armazenar dados -----------------------------
-export(dados2, "dados_sinasc_2013_2020_rs_alterado.csv")
-
-
+# Saving the data --------------------------------------------------------------
+export(dados2, "dados_sinasc_2013_2020_pr.csv")
 
