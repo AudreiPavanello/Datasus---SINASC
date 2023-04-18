@@ -1,2 +1,2 @@
 # Datasus---SINASC
-Analysis of SINASC Database and Creation of ML models to estimate the class of weight at birth.
+Analysis of SINASC Database and Creation of ML models to classify weight at birth.
