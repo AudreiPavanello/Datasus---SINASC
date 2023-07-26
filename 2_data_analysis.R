@@ -1,4 +1,4 @@
-# Carregando bibliotecas necessárias--------------------------------------------
+# Necessary Packages-----------------------------------------------
 
 pacman::p_load("microdatasus", # Load data from DATASUS
                "tidyverse",    # Data manipulation
@@ -20,7 +20,7 @@ pacman::p_load("microdatasus", # Load data from DATASUS
                "neuralnet")    # Neural networks  
 
 
-# Importando dados --------------------------------------------------------
+# Loading data --------------------------------------------------------
 dfpr <- import(setclass = "tibble", here("dados_sinasc_2013_2020_pr_alterado.xlsx"))
 dfmt <- import(setclass = "tibble", here("dados_sinasc_2013_2020_mt_alterado.xlsx"))
 dfes <- import(setclass = "tibble", here("dados_sinasc_2013_2020_es_alterado.xlsx"))
@@ -30,7 +30,7 @@ dfba <- import(setclass = "tibble", here("dados_sinasc_2013_2020_ba_alterado.xls
 df1 <- import(setclass = "tibble", here("dados_sinasc_2013_2020_pr_ok.csv"))
 
 
-### Juntando dados
+### Joining data
 
 df1 <- full_join(dfba, dfmt)
 df1 <- full_join(df1, dfpa)
@@ -41,7 +41,7 @@ df1 <- full_join(df1, dfes)
 export(dados_sinasc_2013_2020_pr_alterado, "dados_sinasc_2013_2020_pr_ok_full.csv")
 
 
-## Adicionando uma coluna com a classificação do peso
+## Add weight classification column
 
 df1 <- df1 %>% 
   mutate(Cat_PESO = case_when(
@@ -63,7 +63,7 @@ df1 %>%
   tabyl() 
 
 
-# Histogramas  das Variáveis Quantitativas --------------------------------
+# Quantitative Variable Histograms --------------------------------
 
 
 ## ESCMAE
@@ -211,16 +211,15 @@ df2 <- select(df1, ESCMAE, RACACOR, GRAVIDEZ, IDANOMAL,
               QTDGESTANT, QTDPARTNOR, ESTCIVMAE
 )
 
-## Separado conjunto de treino e de teste
+## Splitting training and test dataset
 train <- sample(nrow(df2), 0.7*nrow(df2), replace = FALSE)
 TrainSet <- df2[train,]
 ValidSet <- df2[-train,]
 
 
 
-# Modelo Árvore de classificação simples --> -----------------------------------
-
-
+# Classification tree -----------------------------------
+                    
 arvore <- rpart(Cat_PESO ~. ,
                 data = TrainSet,  
                 method = 'class',
@@ -238,14 +237,14 @@ arvore$variable.importance
 
 prp(arvore)
 
-## gráfico para plotar importância das variáveis
+## Variable importante
 
 barplot(arvore$variable.importance, 
         main = "Variable Importance",
         xlab = "Value", ylab = "",
         horiz = TRUE, las = 1, cex.names = 0.52)
 
-## Matrix de confusão Rpart
+## Confusion Matrix
 
 ValidSet$Cat_PESO <- as.factor(ValidSet$Cat_PESO)
 
@@ -265,11 +264,11 @@ tree.roc <- multiclass.roc(ValidSet$Cat_PESO, arvore_roc)
 auc(tree.roc)
 
 
-## Salvando modelo
+## Saving model
 saveRDS(arvore, "modelo_rpart_classificacao_pr_08958_last_.rds")
 
 
-# Regressão Logística Multinomial -----------------------------------------
+# Multinomial Logistic Regression -----------------------------------------
 
 logistic_model <- multinom(formula = Cat_PESO ~. , 
                             data = TrainSet)
@@ -279,7 +278,7 @@ summary(logistic_model)
 
 modelo_logistic$AIC
 
-## Matrix de confusão Modelo Logístico Multinomial
+## Confusion matrix
 
 ValidSet$Cat_PESO <- as.factor(ValidSet$Cat_PESO)
 
@@ -289,9 +288,6 @@ cm_lgm <- confusionMatrix(logistic_teste, reference = ValidSet$Cat_PESO)
 
 cm_lgm
 
-saveRDS(logistic_model, "modelo_logistic_multinomial_classificacao.rds")
-
-
 ## ROC Curve
 
 arvore_roc <- predict(modelo_logistic, newdata = ValidSet, type = "prob")
@@ -300,25 +296,28 @@ tree.roc <- multiclass.roc(ValidSet$Cat_PESO, arvore_roc)
 
 auc(tree.roc)
 
+
+## Saving model
+saveRDS(logistic_model, "modelo_logistic_multinomial_classificacao.rds")
+
 # Random Forest -----------------------------------------------------------
-## Random Forest --> 0.5 usado de split --> Váriavel Target precisa ser Factor
+## Random Forest --> 0.5 split --> Target variable needs to be Factor
 
 rf <- randomForest(Cat_PESO ~. ,
                      data = TrainSet, importance = TRUE, 
                      na.action = na.omit
                      )
-## Salvando modelo
 
-saveRDS(rf, "modelo_random_forest_classificacao_certo.rds")
-
-## Matrix de confusão RandomForest
+## Confusion Matrix
 
 ValidSet$Cat_PESO <- as.factor(ValidSet$Cat_PESO)
 
 rf_train <- predict(modelo_random_forest, newdata = ValidSet)
 cm_rf <- confusionMatrix(rf_train, reference = ValidSet$Cat_PESO)
-
 cm_rf
+
+## Variable Importance
+                     
 rf$importance
 
 varImpPlot(rf)
@@ -331,3 +330,7 @@ arvore_roc <- predict(modelo_random_forest, newdata = ValidSet, type = "prob")
 tree.roc <- multiclass.roc(ValidSet$Cat_PESO, arvore_roc)
 
 auc(tree.roc)
+
+## Saving model
+                     
+saveRDS(rf, "modelo_random_forest_classificacao_certo.rds")
