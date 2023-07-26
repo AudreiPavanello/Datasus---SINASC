@@ -1,23 +1,23 @@
 # Carregando bibliotecas necessárias--------------------------------------------
 
-pacman::p_load("microdatasus", # Carregar dados datasus
-               "tidyverse",    # manipulação de dados
-               "openxlsx",     # exportar dados excel
-               'readxl',       # carregar dados excel
-               'tidytext',     # processamento linguagem natural
-               'rio',          # importar/exportar dados
-               'janitor',      # limpeza de nomes
-               'gtsummary',    # estatísticas descritivas
-               'here',         # sincronizar working directory 
-               'rstatix',      # estatísticas descritivas
-               'CI',           # Cálculo do intervalo de confiança
-               "rpart",        # Modelagem de árvore simples
-               "caret",        # Várias modelagens
-               "tidymodels",   # Várias modelagens
-               "rpart.plot",
-               "randomForest",
-               "pROC",
-               "neuralnet")   # Plotagem da árvore        
+pacman::p_load("microdatasus", # Load data from DATASUS
+               "tidyverse",    # Data manipulation
+               "openxlsx",     # Import .xlsx
+               'readxl',       # Export .xlsx
+               'tidytext',     # Natural language processing
+               'rio',          # Import/export data
+               'janitor',      # Name cleaning
+               'gtsummary',    # Descriptive statistics
+               'here',         # Working directory syncronization
+               'rstatix',      # Descriptive statistics
+               'CI',           # Confidence interval
+               "rpart",        # Classification/Regression trees
+               "caret",        # ML
+               "tidymodels",   # ML
+               "rpart.plot",   # Rpart object tree plot
+               "randomForest", # Randomforest Tree
+               "pROC",         # ROC curve
+               "neuralnet")    # Neural networks  
 
 
 # Importando dados --------------------------------------------------------
