@@ -26,7 +26,7 @@ datapr <- process_sinasc(datapr)
 
 
 # Selecting Variable of interest------------------------------------------------
-data2 <- select(dadospr, IDADEMAE, ESCMAE, QTDFILVIVO, QTDFILMORT,
+data2 <- select(datapr, IDADEMAE, ESCMAE, QTDFILVIVO, QTDFILMORT,
                  SEXO, RACACOR, GRAVIDEZ, PARTO, PESO, IDANOMAL,
                  GESTACAO, RACACORMAE, SEMAGESTAC, ESTCIVMAE, 
                  QTDPARTCES, QTDGESTANT, QTDPARTNOR
@@ -34,8 +34,8 @@ data2 <- select(dadospr, IDADEMAE, ESCMAE, QTDFILVIVO, QTDFILMORT,
 
 
 # Withdrawing NAs --------------------------------------------------------------
-data2 <- drop_na(dados2)
+data2 <- drop_na(data2)
 
 # Saving the data --------------------------------------------------------------
-export(dados2, "dados_sinasc_2013_2020_pr.csv")
+export(dados2, "data_sinasc_2013_2020_pr.csv")
 

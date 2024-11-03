@@ -10,40 +10,22 @@ pacman::p_load("microdatasus", # Load data from DATASUS
                'gtsummary',    # Descriptive statistics
                'here',         # Working directory syncronization
                'rstatix',      # Descriptive statistics
-               'CI',           # Confidence interval
                "rpart",        # Classification/Regression trees
                "caret",        # ML
                "tidymodels",   # ML
                "rpart.plot",   # Rpart object tree plot
                "randomForest", # Randomforest Tree
                "pROC",         # ROC curve
-               "neuralnet")    # Neural networks  
+               "neuralnet",
+               "skimr")    # Neural networks  
 
 
 # Loading data --------------------------------------------------------
-dfpr <- import(setclass = "tibble", here("dados_sinasc_2013_2020_pr_alterado.xlsx"))
-dfmt <- import(setclass = "tibble", here("dados_sinasc_2013_2020_mt_alterado.xlsx"))
-dfes <- import(setclass = "tibble", here("dados_sinasc_2013_2020_es_alterado.xlsx"))
-dfpa <- import(setclass = "tibble", here("dados_sinasc_2013_2020_pa_alterado.xlsx"))
-dfba <- import(setclass = "tibble", here("dados_sinasc_2013_2020_ba_alterado.xlsx"))
-
-df1 <- import(setclass = "tibble", here("dados_sinasc_2013_2020_pr_ok.csv"))
-
-
-### Joining data
-
-df1 <- full_join(dfba, dfmt)
-df1 <- full_join(df1, dfpa)
-df1 <- full_join(df1, dfpr)
-df1 <- full_join(df1, dfes)
-
-
-export(dados_sinasc_2013_2020_pr_alterado, "dados_sinasc_2013_2020_pr_ok_full.csv")
-
+df <- import(setclass = "tibble", here("data_sinasc_2013_2020_pr.csv"))
 
 ## Add weight classification column
 
-df1 <- df1 %>% 
+df <- df %>% 
   mutate(Cat_PESO = case_when(
     PESO < 2500 ~ "Baixo Peso",
     PESO >= 2500 & PESO <= 4000 ~ "Peso Normal",
@@ -52,15 +34,12 @@ df1 <- df1 %>%
 
 # Descriptive statistics --------------------------------------------------
 
-summary(df1)
+skim(df)
 
-df1 %>% 
+df %>% 
   get_summary_stats(type = "common",)  %>% 
   flextable::flextable() %>%    
   flextable::autofit()          
-
-df1 %>% 
-  tabyl() 
 
 
 # Quantitative Variable Histograms --------------------------------
@@ -174,38 +153,37 @@ ggplot(data = df2, aes(x = factor(ESTCIVMAE))) +
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
 
 # Data Wrangling ----------------------------------------------------------
-glimpse(df1)
 
-df1 <- df1 %>%
+df <- df %>%
   mutate_if(is.numeric, as.double) %>%
   mutate_if(negate(is.numeric), as.factor)
 
-df1$PESO <- as.numeric(df1$PESO)
-df1$QTDFILVIVO <- as.numeric(df1$QTDFILVIVO)
-df1$QTDFILMORT <- as.numeric(df1$QTDFILMORT)
-df1$IDADEMAE <- as.numeric(df1$IDADEMAE)
-df1$SEMAGESTAC <- as.numeric(df1$SEMAGESTAC)
-df1$QTDPARTCES <- as.numeric(df1$QTDPARTCES)
-df1$QTDGESTANT <- as.numeric(df1$QTDGESTANT)
-df1$QTDPARTNOR <- as.numeric(df1$QTDPARTNOR)
-df1$MESPRENAT <- as.numeric(df1$MESPRENAT)
+df$PESO <- as.numeric(df$PESO)
+df$QTDFILVIVO <- as.numeric(df$QTDFILVIVO)
+df$QTDFILMORT <- as.numeric(df$QTDFILMORT)
+df$IDADEMAE <- as.numeric(df$IDADEMAE)
+df$SEMAGESTAC <- as.numeric(df$SEMAGESTAC)
+df$QTDPARTCES <- as.numeric(df$QTDPARTCES)
+df$QTDGESTANT <- as.numeric(df$QTDGESTANT)
+df$QTDPARTNOR <- as.numeric(df$QTDPARTNOR)
+df$MESPRENAT <- as.numeric(df$MESPRENAT)
 
-df1$ESCMAE <- as.factor(df1$ESCMAE)
-df1$SEXO <- as.factor(df1$SEXO)
-df1$RACACOR <- as.factor(df1$RACACOR)
-df1$RACACORMAE <- as.factor(df1$RACACORMAE)
-df1$GRAVIDEZ <- as.factor(df1$GRAVIDEZ)
-df1$PARTO <- as.factor(df1$PARTO)
-df1$IDANOMAL <- as.factor(df1$IDANOMAL)
-df1$GESTACAO <- as.factor(df1$GESTACAO)
-df1$RACACORMAE <- as.factor(df1$RACACORMAE)
-df1$ESTCIVMAE <- as.factor(df1$ESTCIVMAE)
-df1$CODOCUPMAE <- as.factor(df1$CODOCUPMAE)
+df$ESCMAE <- as.factor(df$ESCMAE)
+df$SEXO <- as.factor(df$SEXO)
+df$RACACOR <- as.factor(df$RACACOR)
+df$RACACORMAE <- as.factor(df$RACACORMAE)
+df$GRAVIDEZ <- as.factor(df$GRAVIDEZ)
+df$PARTO <- as.factor(df$PARTO)
+df$IDANOMAL <- as.factor(df$IDANOMAL)
+df$GESTACAO <- as.factor(df$GESTACAO)
+df$RACACORMAE <- as.factor(df$RACACORMAE)
+df$ESTCIVMAE <- as.factor(df$ESTCIVMAE)
+df$CODOCUPMAE <- as.factor(df$CODOCUPMAE)
 
-df1$Cat_PESO <- as.factor(df1$Cat_PESO)
+df$Cat_PESO <- as.factor(df$Cat_PESO)
 
 
-df2 <- select(df1, ESCMAE, RACACOR, GRAVIDEZ, IDANOMAL,
+df2 <- select(df, ESCMAE, RACACOR, GRAVIDEZ, IDANOMAL,
               RACACORMAE, Cat_PESO, IDADEMAE,  Cat_PESO, QTDFILVIVO,
               QTDFILMORT,  SEMAGESTAC, PARTO, SEXO, QTDPARTCES,
               QTDGESTANT, QTDPARTNOR, ESTCIVMAE
@@ -235,7 +213,6 @@ rpart.plot::rpart.plot(arvore, type = 2, extra = 106,
 
 arvore$variable.importance
 
-prp(arvore)
 
 ## Variable importante
 
